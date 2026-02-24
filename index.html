@@ -654,6 +654,16 @@
     color: #ccc;
     font-style: normal;
   }
+  /* ソートヘッダー */
+  .sortable {
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .sortable:hover { color: var(--sakura-deep); }
+  .sort-icon { margin-left: 4px; font-size: 0.7rem; color: #bbb; }
+  .sort-icon.active { color: var(--sakura-deep); }
+
   .fade-in {
     opacity: 0;
     transform: translateY(20px);
@@ -937,9 +947,9 @@
         <th style="text-align:left; padding-left:1.2rem;">順位</th>
         <th style="text-align:left;">菓子名</th>
         <th>地域</th>
-        <th>独自性</th>
-        <th>定番度</th>
-        <th>総合スコア</th>
+        <th class="sortable" onclick="sortRanking('dokuji', this)">独自性<span class="sort-icon" id="sort-dokuji">▲▼</span></th>
+        <th class="sortable" onclick="sortRanking('teiban', this)">定番度<span class="sort-icon" id="sort-teiban">▲▼</span></th>
+        <th class="sortable" onclick="sortRanking('score', this)">総合スコア<span class="sort-icon" id="sort-score">▲▼</span></th>
       </tr>
     </thead>
     <tbody id="rankingBody">
@@ -973,9 +983,9 @@
           <tr>
             <th style="text-align:left; padding-left:1.2rem; width:60px;">順位</th>
             <th style="text-align:left;">菓子名</th>
-            <th>独自性</th>
-            <th>定番度</th>
-            <th>好み</th>
+            <th class="sortable" onclick="sortJudge('hagino', 'dokuji', this)">独自性<span class="sort-icon" id="jsort-hagino-dokuji">▲▼</span></th>
+            <th class="sortable" onclick="sortJudge('hagino', 'teiban', this)">定番度<span class="sort-icon" id="jsort-hagino-teiban">▲▼</span></th>
+            <th class="sortable" onclick="sortJudge('hagino', 'kono', this)">好み<span class="sort-icon" id="jsort-hagino-kono">▲▼</span></th>
           </tr>
         </thead>
         <tbody id="haginoBody"></tbody>
@@ -996,9 +1006,9 @@
           <tr>
             <th style="text-align:left; padding-left:1.2rem; width:60px;">順位</th>
             <th style="text-align:left;">菓子名</th>
-            <th>独自性</th>
-            <th>定番度</th>
-            <th>好み</th>
+            <th class="sortable" onclick="sortJudge('yasumoto', 'dokuji', this)">独自性<span class="sort-icon" id="jsort-yasumoto-dokuji">▲▼</span></th>
+            <th class="sortable" onclick="sortJudge('yasumoto', 'teiban', this)">定番度<span class="sort-icon" id="jsort-yasumoto-teiban">▲▼</span></th>
+            <th class="sortable" onclick="sortJudge('yasumoto', 'kono', this)">好み<span class="sort-icon" id="jsort-yasumoto-kono">▲▼</span></th>
           </tr>
         </thead>
         <tbody id="yasumotoBody"></tbody>
@@ -1019,9 +1029,9 @@
           <tr>
             <th style="text-align:left; padding-left:1.2rem; width:60px;">順位</th>
             <th style="text-align:left;">菓子名</th>
-            <th>独自性</th>
-            <th>定番度</th>
-            <th>好み</th>
+            <th class="sortable" onclick="sortJudge('nakamura', 'dokuji', this)">独自性<span class="sort-icon" id="jsort-nakamura-dokuji">▲▼</span></th>
+            <th class="sortable" onclick="sortJudge('nakamura', 'teiban', this)">定番度<span class="sort-icon" id="jsort-nakamura-teiban">▲▼</span></th>
+            <th class="sortable" onclick="sortJudge('nakamura', 'kono', this)">好み<span class="sort-icon" id="jsort-nakamura-kono">▲▼</span></th>
           </tr>
         </thead>
         <tbody id="nakamuraBody"></tbody>
@@ -1104,11 +1114,37 @@ function getMedal(rank) {
 
 // 総合ランキング
 let currentFilter = 'all';
+let currentSortKey = 'score';
+let currentSortDir = 'desc';
+
+function sortRanking(key, th) {
+  if (currentSortKey === key) {
+    currentSortDir = currentSortDir === 'desc' ? 'asc' : 'desc';
+  } else {
+    currentSortKey = key;
+    currentSortDir = 'desc';
+  }
+  // アイコン更新
+  document.querySelectorAll('.sort-icon').forEach(el => {
+    el.textContent = '▲▼';
+    el.classList.remove('active');
+  });
+  const icon = document.getElementById('sort-' + key);
+  if (icon) {
+    icon.textContent = currentSortDir === 'desc' ? '▼' : '▲';
+    icon.classList.add('active');
+  }
+  renderRanking(currentFilter);
+}
+
 function renderRanking(filter) {
-  const sorted = [...allData].sort((a, b) => b.score - a.score);
-  const filtered = filter === 'all' ? sorted : sorted.filter(d => d.region === filter);
+  if (filter !== undefined) currentFilter = filter;
+  const sorted = [...allData].sort((a, b) => {
+    const dir = currentSortDir === 'desc' ? -1 : 1;
+    return (a[currentSortKey] - b[currentSortKey]) * dir;
+  });
+  const filtered = currentFilter === 'all' ? sorted : sorted.filter(d => d.region === currentFilter);
   
-  let globalRank = 0;
   const body = document.getElementById('rankingBody');
   body.innerHTML = '';
   
@@ -1152,17 +1188,48 @@ function filterRanking(region, btn) {
   currentFilter = region;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  renderRanking(region);
+  renderRanking();
 }
 
-// 審査員別
-function renderJudge(judgeId, bodyId, getDokuji, getTeiban, getKono, commentKey) {
-  const sorted = [...allData].sort((a, b) => {
-    const aScore = getDokuji(a) + getTeiban(a) + getKono(a);
-    const bScore = getDokuji(b) + getTeiban(b) + getKono(b);
-    return bScore - aScore;
+// 審査員別ソート状態
+const judgeSortState = {
+  hagino:   { key: 'kono', dir: 'desc' },
+  yasumoto: { key: 'kono', dir: 'desc' },
+  nakamura: { key: 'kono', dir: 'desc' },
+};
+
+const judgeConfig = {
+  hagino:   { bodyId: 'haginoBody',   getDokuji: d => d.hDokuji, getTeiban: d => d.hTeiban, getKono: d => d.hKono, commentKey: 'hagino' },
+  yasumoto: { bodyId: 'yasumotoBody', getDokuji: d => d.yDokuji, getTeiban: d => d.yTeiban, getKono: d => d.yKono, commentKey: 'yasumoto' },
+  nakamura: { bodyId: 'nakamuraBody', getDokuji: d => d.nDokuji, getTeiban: d => d.nTeiban, getKono: d => d.nKono, commentKey: 'nakamura' },
+};
+
+function sortJudge(judgeKey, sortKey, th) {
+  const state = judgeSortState[judgeKey];
+  if (state.key === sortKey) {
+    state.dir = state.dir === 'desc' ? 'asc' : 'desc';
+  } else {
+    state.key = sortKey;
+    state.dir = 'desc';
+  }
+  // アイコン更新
+  ['dokuji','teiban','kono'].forEach(k => {
+    const el = document.getElementById(`jsort-${judgeKey}-${k}`);
+    if (el) { el.textContent = '▲▼'; el.classList.remove('active'); }
   });
-  
+  const icon = document.getElementById(`jsort-${judgeKey}-${sortKey}`);
+  if (icon) { icon.textContent = state.dir === 'desc' ? '▼' : '▲'; icon.classList.add('active'); }
+  renderJudgeByKey(judgeKey);
+}
+
+function renderJudgeByKey(judgeKey) {
+  const { bodyId, getDokuji, getTeiban, getKono, commentKey } = judgeConfig[judgeKey];
+  const state = judgeSortState[judgeKey];
+  const getVal = state.key === 'dokuji' ? getDokuji : state.key === 'teiban' ? getTeiban : getKono;
+  const sorted = [...allData].sort((a, b) => {
+    const dir = state.dir === 'desc' ? -1 : 1;
+    return (getVal(a) - getVal(b)) * dir;
+  });
   const body = document.getElementById(bodyId);
   body.innerHTML = '';
   sorted.forEach((item, i) => {
@@ -1185,6 +1252,11 @@ function renderJudge(judgeId, bodyId, getDokuji, getTeiban, getKono, commentKey)
     `;
     body.appendChild(row);
   });
+}
+
+// 後方互換（旧呼び出し用）
+function renderJudge(judgeId, bodyId, getDokuji, getTeiban, getKono, commentKey) {
+  renderJudgeByKey(judgeId);
 }
 
 function switchJudge(id, btn) {
@@ -1253,7 +1325,12 @@ const comments = {
 };
 
 // 初期描画
-renderRanking('all');
+// スコア降順で初期表示
+currentSortKey = 'score';
+currentSortDir = 'desc';
+const initIcon = document.getElementById('sort-score');
+if (initIcon) { initIcon.textContent = '▼'; initIcon.classList.add('active'); }
+renderRanking();
 renderJudge('hagino', 'haginoBody', d => d.hDokuji, d => d.hTeiban, d => d.hKono, 'hagino');
 renderJudge('yasumoto', 'yasumotoBody', d => d.yDokuji, d => d.yTeiban, d => d.yKono, 'yasumoto');
 renderJudge('nakamura', 'nakamuraBody', d => d.nDokuji, d => d.nTeiban, d => d.nKono, 'nakamura');
