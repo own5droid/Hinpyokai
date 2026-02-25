@@ -683,10 +683,13 @@
     #rankingTable .rank-row td:nth-child(4),
     #rankingTable .rank-row td:nth-child(5) { display: none; }
     /* 審査員別テーブルは横スクロールで全列表示 */
-    .judge-panel { overflow-x: auto; }
+    .judge-panel { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .judge-panel .rank-table {
       min-width: 480px;
     }
+    /* 菓子名が横に表示されるよう最小幅を確保 */
+    .rank-name { white-space: nowrap; }
+    .rank-maker { white-space: nowrap; }
   }
 
   /* 折りたたみボタン */
@@ -1192,7 +1195,8 @@
   </div>
 
   <!-- ランキングテーブル -->
-  <table class="rank-table fade-in" id="rankingTable">
+  <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+  <table class="rank-table fade-in" id="rankingTable" style="min-width: 520px;">
     <thead>
       <tr>
         <th style="text-align:left; padding-left:1.2rem;">順位</th>
@@ -1206,6 +1210,7 @@
     <tbody id="rankingBody">
     </tbody>
   </table>
+  </div>
   <button class="show-more-btn" id="showMoreBtn" onclick="toggleMoreRanking(this)" style="display:none;">
     6位以下を見る ▼
   </button>
