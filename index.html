@@ -677,10 +677,41 @@
   /* レスポンシブ */
   @media (max-width: 600px) {
     .mini-scores { display: none; }
-    .rank-table thead th:nth-child(4),
-    .rank-table thead th:nth-child(5) { display: none; }
-    .rank-row td:nth-child(4),
-    .rank-row td:nth-child(5) { display: none; }
+    /* 総合ランキングテーブルは独自性・定番度を非表示（スコアのみ） */
+    #rankingTable thead th:nth-child(4),
+    #rankingTable thead th:nth-child(5) { display: none; }
+    #rankingTable .rank-row td:nth-child(4),
+    #rankingTable .rank-row td:nth-child(5) { display: none; }
+    /* 審査員別テーブルは横スクロールで全列表示 */
+    .judge-panel { overflow-x: auto; }
+    .judge-panel .rank-table {
+      min-width: 480px;
+    }
+  }
+
+  /* 折りたたみボタン */
+  .show-more-btn {
+    display: block;
+    margin: 1rem auto 0;
+    background: white;
+    border: 1.5px solid var(--sakura-light);
+    border-radius: 20px;
+    padding: 0.6rem 2rem;
+    font-size: 0.85rem;
+    color: var(--sakura-deep);
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .show-more-btn:hover {
+    background: var(--sakura-light);
+  }
+  .rank-row.hidden-row {
+    display: none;
+  }
+  .rank-row.hidden-row.shown {
+    display: table-row;
   }
 
   /* 区切りセクション */
@@ -1175,6 +1206,9 @@
     <tbody id="rankingBody">
     </tbody>
   </table>
+  <button class="show-more-btn" id="showMoreBtn" onclick="toggleMoreRanking(this)" style="display:none;">
+    6位以下を見る ▼
+  </button>
 </section>
 
 <div class="section-divider">✦ ✦ ✦</div>
@@ -1373,7 +1407,7 @@ function renderRanking(filter) {
     const cls = getRankClass(rank);
     const medal = getMedal(rank);
     const row = document.createElement('tr');
-    row.className = 'rank-row';
+    row.className = 'rank-row' + (rank > 5 ? ' hidden-row' : '');
     row.setAttribute('data-region', item.region);
     row.innerHTML = `
       <td>
@@ -1402,6 +1436,33 @@ function renderRanking(filter) {
     `;
     body.appendChild(row);
   });
+
+  // 6位以降があればボタン表示
+  const btn = document.getElementById('showMoreBtn');
+  if (btn) {
+    if (filtered.length > 5) {
+      btn.style.display = 'block';
+      btn.textContent = '6位以下を見る ▼';
+      btn.classList.remove('open');
+      document.querySelectorAll('.rank-row.hidden-row').forEach(r => r.classList.remove('shown'));
+    } else {
+      btn.style.display = 'none';
+    }
+  }
+}
+
+function toggleMoreRanking(btn) {
+  const rows = document.querySelectorAll('.rank-row.hidden-row');
+  const isOpen = btn.classList.contains('open');
+  if (isOpen) {
+    rows.forEach(r => r.classList.remove('shown'));
+    btn.textContent = '6位以下を見る ▼';
+    btn.classList.remove('open');
+  } else {
+    rows.forEach(r => r.classList.add('shown'));
+    btn.textContent = '折りたたむ ▲';
+    btn.classList.add('open');
+  }
 }
 
 function filterRanking(region, btn) {
