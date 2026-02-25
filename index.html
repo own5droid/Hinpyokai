@@ -303,31 +303,12 @@
     margin-top: 1.2rem;
   }
 
-  @media (max-width: 600px) {
-    .scoring-info {
-      padding: 1rem 0.6rem;
-    }
-    .scoring-items {
-      flex-wrap: nowrap;
-      gap: 0.4rem;
-      margin-top: 0.8rem;
-    }
-    .scoring-item {
-      min-width: 0;
-      flex: 1;
-      padding: 0.5rem 0.3rem;
-      border-radius: 8px;
-    }
-    .scoring-item .icon { font-size: 1rem; margin-bottom: 0.2rem; }
-    .scoring-item .name { font-size: 0.72rem; }
-    .scoring-item .scale { font-size: 0.62rem; }
-  }
+
 
   .scoring-item {
     background: white;
     border-radius: 12px;
     padding: 1rem 1.5rem;
-    min-width: 140px;
     border: 1px solid var(--sakura-light);
   }
 
@@ -694,30 +675,35 @@
     transform: translateY(0);
   }
 
+  /* 総合ランキングカード：PCでは非表示 */
+  #rankingCardList { display: none; }
+
   /* ========================
-     スマホ用レイアウト
+     スマホ用レイアウト (max-width: 600px)
   ======================== */
   @media (max-width: 600px) {
     .mini-scores { display: none; }
 
+    /* 審査基準アイコン：枠内に収める */
+    .scoring-info { padding: 1rem 0.5rem; }
+    .scoring-items { gap: 0.4rem; }
+    .scoring-item {
+      flex: 1;
+      min-width: 0;
+      padding: 0.5rem 0.2rem;
+      border-radius: 8px;
+    }
+    .scoring-item .icon { font-size: 0.95rem; margin-bottom: 0.15rem; }
+    .scoring-item .name { font-size: 0.68rem; }
+    .scoring-item .scale { font-size: 0.6rem; }
+
+    /* 総合ランキング：カード表示・テーブル非表示 */
+    #rankingCardList { display: block; }
+    #rankingTableWrapper { display: none; }
+
     /* 審査員別テーブルは横スクロール */
     .judge-panel { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .judge-panel .rank-table { min-width: 480px; }
-
-    /* 総合ランキング：スマホはカード形式（CSSで制御済み） */
-  }
-
-  /* 総合ランキングカード（スマホ用） */
-  #rankingCardList {
-    display: none;
-  }
-  @media (max-width: 600px) {
-    #rankingCardList {
-      display: block;
-    }
-    #rankingTableWrapper {
-      display: none;
-    }
   }
 
   .rank-card {
